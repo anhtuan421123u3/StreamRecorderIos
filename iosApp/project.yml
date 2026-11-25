@@ -22,8 +22,6 @@ targets:
       - path: Assets.xcassets
       - path: PrivacyInfo.xcprivacy
         buildPhase: resources
-    info:
-      path: Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.streamrecorder.ios

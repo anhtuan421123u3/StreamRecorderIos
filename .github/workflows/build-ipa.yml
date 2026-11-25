@@ -76,6 +76,15 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Verify Info.plist inside the built app (crash guard)
+        working-directory: iosApp
+        run: |
+          APP="build/StreamRecorder.xcarchive/Products/Applications/StreamRecorder.app"
+          plutil -p "$APP/Info.plist"
+          plutil -extract CADisableMinimumFrameDurationOnPhone raw "$APP/Info.plist" | grep -q true \
+            || { echo "::error::CADisableMinimumFrameDurationOnPhone missing -> Compose would crash on launch"; exit 1; }
+          plutil -extract CFBundleExecutable raw "$APP/Info.plist"
+
       - name: Package & Ad-Hoc Sign StreamRecorder IPA
         working-directory: iosApp
         run: |
