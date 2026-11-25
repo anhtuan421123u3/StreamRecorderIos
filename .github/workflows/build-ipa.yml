@@ -1,4 +1,4 @@
-name: Build iOS IPA
+name: Build iOS IPA (Kotlin Multiplatform)
 
 on:
   push:
@@ -18,75 +18,83 @@ permissions:
 
 jobs:
   build-ipa:
-    name: Build Unsigned IPA (macOS)
+    name: Build StreamRecorder IPA (KMP + Xcode)
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check Xcode & Swift version
+      - name: Set up JDK 21 for Kotlin Multiplatform
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Gradle with caching
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Kotlin Multiplatform iOS Release Framework (iosArm64)
         run: |
-          xcodebuild -version
-          swift --version
+          chmod +x gradlew
+          ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --no-daemon --stacktrace
 
       - name: Ensure XcodeGen is installed
         run: |
+          xcodebuild -version
           if ! command -v xcodegen >/dev/null 2>&1; then
             brew install xcodegen
           fi
 
-      - name: Generate Xcode project & Archive iOS App
-        working-directory: StreamAppIos
+      - name: Generate Xcode Project & Archive iOS App
+        working-directory: iosApp
         run: |
           set -o pipefail
           mkdir -p build
-
-          # Temporarily move Package.swift so xcodebuild uses the generated .xcodeproj cleanly
-          mv Package.swift Package.swift.spm
-
           xcodegen generate
 
           xcodebuild clean archive \
-            -project LiveVault.xcodeproj \
-            -scheme LiveVault \
+            -project StreamRecorder.xcodeproj \
+            -scheme StreamRecorder \
             -configuration Release \
             -destination "generic/platform=iOS" \
-            -archivePath build/LiveVault.xcarchive \
+            -archivePath build/StreamRecorder.xcarchive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_ENTITLEMENTS="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES 2>&1 | tee build/xcodebuild.log
 
-      - name: Print Xcode Build Errors to Summary (on failure)
+      - name: Print Build Errors to Summary (on failure)
         if: failure()
-        working-directory: StreamAppIos
+        working-directory: iosApp
         run: |
-          echo "### Xcode Build Errors" >> "$GITHUB_STEP_SUMMARY"
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          grep -E ": error:|fatal error:|ARCHIVE FAILED" build/xcodebuild.log | tail -n 50 >> "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f build/xcodebuild.log ]; then
+            echo "### Xcode Build Errors" >> "$GITHUB_STEP_SUMMARY"
+            echo '```text' >> "$GITHUB_STEP_SUMMARY"
+            grep -E ": error:|fatal error:|ARCHIVE FAILED|ld:" build/xcodebuild.log | tail -n 50 >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Package & Ad-Hoc Sign IPA
-        working-directory: StreamAppIos
+      - name: Package & Ad-Hoc Sign StreamRecorder IPA
+        working-directory: iosApp
         run: |
-          rm -rf build/Payload build/LiveVault-iOS.ipa
+          rm -rf build/Payload build/StreamRecorder-iOS.ipa
           mkdir -p build/Payload
-          cp -R build/LiveVault.xcarchive/Products/Applications/LiveVault.app build/Payload/
+          cp -R build/StreamRecorder.xcarchive/Products/Applications/StreamRecorder.app build/Payload/
 
-          # Ad-hoc sign bundle for Sideloadly / AltStore / SideStore / TrollStore / ESign / Feather
-          codesign --force --deep --sign - build/Payload/LiveVault.app
+          # Ad-hoc sign for Sideloadly / AltStore / SideStore / TrollStore / ESign / Feather
+          codesign --force --deep --sign - build/Payload/StreamRecorder.app
 
           cd build
-          zip -r9 LiveVault-iOS.ipa Payload
-          ls -lh LiveVault-iOS.ipa
+          zip -r9 StreamRecorder-iOS.ipa Payload
+          ls -lh StreamRecorder-iOS.ipa
 
-      - name: Upload IPA Artifact (Download from Actions tab)
+      - name: Upload StreamRecorder IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LiveVault-iOS-IPA
-          path: StreamAppIos/build/LiveVault-iOS.ipa
+          name: StreamRecorder-iOS-IPA
+          path: iosApp/build/StreamRecorder-iOS.ipa
           if-no-files-found: error
           retention-days: 30
 
@@ -94,5 +102,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: StreamAppIos/build/LiveVault-iOS.ipa
+          files: iosApp/build/StreamRecorder-iOS.ipa
           generate_release_notes: true

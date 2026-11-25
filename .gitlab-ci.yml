@@ -5,39 +5,46 @@ variables:
   LC_ALL: "en_US.UTF-8"
   LANG: "en_US.UTF-8"
 
-build_ios_ipa:
+build_streamrecorder_ipa:
   stage: build
   tags:
     - saas-macos-medium-m1
   script:
     - xcodebuild -version
     - |
+      if ! command -v java >/dev/null 2>&1; then
+        brew install openjdk@21
+        export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
+      fi
+    - |
       if ! command -v xcodegen >/dev/null 2>&1; then
         brew install xcodegen
       fi
-    - cd StreamAppIos
-    - mv Package.swift Package.swift.spm
+    - chmod +x gradlew
+    - ./gradlew :composeApp:linkReleaseFrameworkIosArm64 --no-daemon
+    - cd iosApp
+    - mkdir -p build
     - xcodegen generate
     - |
       xcodebuild clean archive \
-        -project LiveVault.xcodeproj \
-        -scheme LiveVault \
+        -project StreamRecorder.xcodeproj \
+        -scheme StreamRecorder \
         -configuration Release \
         -destination "generic/platform=iOS" \
-        -archivePath build/LiveVault.xcarchive \
+        -archivePath build/StreamRecorder.xcarchive \
         CODE_SIGN_IDENTITY="" \
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGNING_ALLOWED=NO \
         CODE_SIGN_ENTITLEMENTS="" \
         AD_HOC_CODE_SIGNING_ALLOWED=YES
     - mkdir -p build/Payload
-    - cp -R build/LiveVault.xcarchive/Products/Applications/LiveVault.app build/Payload/
-    - codesign --force --deep --sign - build/Payload/LiveVault.app
-    - cd build && zip -r9 LiveVault-iOS.ipa Payload
+    - cp -R build/StreamRecorder.xcarchive/Products/Applications/StreamRecorder.app build/Payload/
+    - codesign --force --deep --sign - build/Payload/StreamRecorder.app
+    - cd build && zip -r9 StreamRecorder-iOS.ipa Payload
   artifacts:
-    name: "LiveVault-iOS-IPA-$CI_COMMIT_SHORT_SHA"
+    name: "StreamRecorder-iOS-IPA-$CI_COMMIT_SHORT_SHA"
     paths:
-      - StreamAppIos/build/LiveVault-iOS.ipa
+      - iosApp/build/StreamRecorder-iOS.ipa
     expire_in: 30 days
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
