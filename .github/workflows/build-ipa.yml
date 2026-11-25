@@ -39,6 +39,9 @@ jobs:
       - name: Generate Xcode project & Archive iOS App
         working-directory: StreamAppIos
         run: |
+          set -o pipefail
+          mkdir -p build
+
           # Temporarily move Package.swift so xcodebuild uses the generated .xcodeproj cleanly
           mv Package.swift Package.swift.spm
 
@@ -54,7 +57,16 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_ENTITLEMENTS="" \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            AD_HOC_CODE_SIGNING_ALLOWED=YES 2>&1 | tee build/xcodebuild.log
+
+      - name: Print Xcode Build Errors to Summary (on failure)
+        if: failure()
+        working-directory: StreamAppIos
+        run: |
+          echo "### Xcode Build Errors" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -E ": error:|fatal error:|ARCHIVE FAILED" build/xcodebuild.log | tail -n 50 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Package & Ad-Hoc Sign IPA
         working-directory: StreamAppIos

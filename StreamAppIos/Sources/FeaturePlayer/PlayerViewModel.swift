@@ -175,7 +175,7 @@ public final class PlayerViewModel: NSObject, @unchecked Sendable {
             
             if savedCurrentTime > 0 {
                 let cmTime = CMTime(seconds: savedCurrentTime, preferredTimescale: 600)
-                self.player?.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                _ = await self.player?.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
             }
             
             if wasPlaying {
