@@ -9,7 +9,11 @@ fun MainViewController(delegate: IosNativeDelegate? = null): UIViewController {
     if (delegate != null) {
         IosBridgeRegistry.delegate = delegate
     }
-    return ComposeUIViewController {
+    return ComposeUIViewController(
+        configure = {
+            enforceStrictPlistSanityCheck = false
+        }
+    ) {
         StreamRecorderApp()
     }
 }

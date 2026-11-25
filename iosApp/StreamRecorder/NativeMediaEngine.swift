@@ -12,13 +12,16 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
 
     private var playerObservers: [ObjectIdentifier: (player: AVPlayer, token: Any, url: String)] = [:]
     private var lastAppliedSeek: [ObjectIdentifier: Double] = [:]
+    private var lastRequestedIsPlaying: [ObjectIdentifier: Bool] = [:]
+    private var audioSessionConfigured = false
 
     override private init() {
         super.init()
-        configureAudioSession()
     }
 
     private func configureAudioSession() {
+        guard !audioSessionConfigured else { return }
+        audioSessionConfigured = true
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.allowAirPlay])
             try AVAudioSession.sharedInstance().setActive(true)
@@ -55,6 +58,7 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
         autoPlay: Bool,
         listener: any IosPlaybackListener
     ) -> UIViewController {
+        configureAudioSession()
         let playerVC = AVPlayerViewController()
         playerVC.showsPlaybackControls = true
         playerVC.allowsPictureInPicturePlayback = true
@@ -79,6 +83,7 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
 
         let key = ObjectIdentifier(playerVC)
         playerObservers[key] = (player: player, token: token, url: urlOrPath)
+        lastRequestedIsPlaying[key] = autoPlay
 
         if autoPlay {
             player.play()
@@ -110,12 +115,12 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
             }
         }
 
-        if isPlaying {
-            if player.timeControlStatus != .playing {
+        let prevPlaying = lastRequestedIsPlaying[key]
+        if prevPlaying != isPlaying {
+            lastRequestedIsPlaying[key] = isPlaying
+            if isPlaying {
                 player.play()
-            }
-        } else {
-            if player.timeControlStatus != .paused {
+            } else {
                 player.pause()
             }
         }
@@ -128,6 +133,7 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
             entry.player.pause()
         }
         lastAppliedSeek.removeValue(forKey: key)
+        lastRequestedIsPlaying.removeValue(forKey: key)
         if let playerVC = controller as? AVPlayerViewController {
             playerVC.player = nil
         }
@@ -143,8 +149,8 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
         return vc
     }
 
-    func loadUrlInSniffer(controller: UIViewController, url: String) {
-        (controller as? WebSnifferHostController)?.loadAddress(url)
+    func loadUrlInSniffer(controller: UIViewController, url: String, reloadTrigger: Int32) {
+        (controller as? WebSnifferHostController)?.loadAddress(url, reloadTrigger: reloadTrigger)
     }
 
     // MARK: - Stream / Video Download to Local Documents/Recordings
@@ -274,12 +280,33 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
         listener: any IosTaskListener
     ) {
         if filePathOrUrl.hasPrefix("http://") || filePathOrUrl.hasPrefix("https://") {
-            // Download remote clip first, then save to Photos
             guard let remote = URL(string: filePathOrUrl) else {
                 listener.onFinished(success: false, pathOrMessage: "Invalid video URL")
                 return
             }
             let tempDest = clipsDirectory().appendingPathComponent("photos_export_\(Int(Date().timeIntervalSince1970)).mp4")
+            if filePathOrUrl.lowercased().contains(".m3u8") {
+                let asset = AVURLAsset(url: remote)
+                guard let exporter = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
+                    listener.onFinished(success: false, pathOrMessage: "HLS clip cannot be exported to Photos")
+                    return
+                }
+                try? FileManager.default.removeItem(at: tempDest)
+                exporter.outputURL = tempDest
+                exporter.outputFileType = .mp4
+                exporter.timeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: 30.0, preferredTimescale: 600))
+                exporter.exportAsynchronously {
+                    DispatchQueue.main.async {
+                        if exporter.status == .completed {
+                            self.performPhotoLibrarySave(localFileURL: tempDest, listener: listener)
+                        } else {
+                            listener.onFinished(success: false, pathOrMessage: exporter.error?.localizedDescription ?? "HLS export failed")
+                        }
+                    }
+                }
+                return
+            }
+
             URLSession.shared.downloadTask(with: remote) { tmp, _, err in
                 if let err = err {
                     DispatchQueue.main.async {
@@ -287,10 +314,21 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
                     }
                     return
                 }
-                guard let tmp = tmp else { return }
+                guard let tmp = tmp else {
+                    DispatchQueue.main.async {
+                        listener.onFinished(success: false, pathOrMessage: "Empty video download")
+                    }
+                    return
+                }
                 try? FileManager.default.removeItem(at: tempDest)
-                try? FileManager.default.moveItem(at: tmp, to: tempDest)
-                self.performPhotoLibrarySave(localFileURL: tempDest, listener: listener)
+                do {
+                    try FileManager.default.moveItem(at: tmp, to: tempDest)
+                    self.performPhotoLibrarySave(localFileURL: tempDest, listener: listener)
+                } catch {
+                    DispatchQueue.main.async {
+                        listener.onFinished(success: false, pathOrMessage: error.localizedDescription)
+                    }
+                }
             }.resume()
         } else {
             let localURL = URL(fileURLWithPath: filePathOrUrl)
@@ -333,13 +371,16 @@ final class NativeMediaEngine: NSObject, IosNativeDelegate {
             }
 
             let activityVC = UIActivityViewController(activityItems: [title, itemToShare], applicationActivities: nil)
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let rootVC = scene.windows.first?.rootViewController {
-                if let pop = activityVC.popoverPresentationController {
-                    pop.sourceView = rootVC.view
-                    pop.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 1, height: 1)
+            if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first,
+               var topVC = (scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first)?.rootViewController {
+                while let presented = topVC.presentedViewController {
+                    topVC = presented
                 }
-                rootVC.present(activityVC, animated: true)
+                if let pop = activityVC.popoverPresentationController {
+                    pop.sourceView = topVC.view
+                    pop.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 1, height: 1)
+                }
+                topVC.present(activityVC, animated: true)
             }
         }
     }
@@ -384,6 +425,7 @@ final class WebSnifferHostController: UIViewController, WKNavigationDelegate, WK
     private var webView: WKWebView!
     private let initialUrl: String
     private var lastLoadedUrl: String = ""
+    private var lastReloadTrigger: Int32 = 0
 
     init(initialUrl: String, listener: any IosSnifferListener) {
         self.initialUrl = initialUrl
@@ -457,13 +499,16 @@ final class WebSnifferHostController: UIViewController, WKNavigationDelegate, WK
         webView.allowsBackForwardNavigationGestures = true
         view.addSubview(webView)
 
-        loadAddress(initialUrl)
+        loadAddress(initialUrl, reloadTrigger: 0)
     }
 
-    func loadAddress(_ urlString: String) {
-        guard isViewLoaded, urlString != lastLoadedUrl, let url = URL(string: urlString) else { return }
-        lastLoadedUrl = urlString
-        webView.load(URLRequest(url: url))
+    func loadAddress(_ urlString: String, reloadTrigger: Int32) {
+        guard isViewLoaded, let url = URL(string: urlString) else { return }
+        if urlString != lastLoadedUrl || reloadTrigger != lastReloadTrigger {
+            lastLoadedUrl = urlString
+            lastReloadTrigger = reloadTrigger
+            webView.load(URLRequest(url: url))
+        }
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

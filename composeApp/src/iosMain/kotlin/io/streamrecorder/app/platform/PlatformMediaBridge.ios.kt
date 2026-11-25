@@ -43,7 +43,7 @@ interface IosNativeDelegate {
         listener: IosSnifferListener
     ): UIViewController
 
-    fun loadUrlInSniffer(controller: UIViewController, url: String)
+    fun loadUrlInSniffer(controller: UIViewController, url: String, reloadTrigger: Int)
 
     fun downloadStream(
         recordingId: String,
@@ -143,7 +143,7 @@ actual fun NativeWebStreamSniffer(
         modifier = modifier,
         update = { vc ->
             if (reloadTrigger > 0) {
-                IosBridgeRegistry.delegate?.loadUrlInSniffer(vc, initialUrl)
+                IosBridgeRegistry.delegate?.loadUrlInSniffer(vc, initialUrl, reloadTrigger)
             }
         }
     )

@@ -145,11 +145,10 @@ fun PlayerClipScreen(
                         seekRequestSec = seekRequestSec,
                         onProgress = { cur, dur ->
                             currentSec = cur
-                            if (dur > 1.0) {
+                            if (dur.isFinite() && dur > 1.0) {
                                 totalDurationSec = dur
-                                if (clipEndSec > dur) {
-                                    clipEndSec = dur
-                                }
+                                clipEndSec = clipEndSec.coerceIn(1.0, dur)
+                                clipStartSec = clipStartSec.coerceIn(0.0, max(0.0, clipEndSec - 1.0))
                             }
                         },
                         modifier = Modifier.fillMaxSize()
@@ -322,18 +321,20 @@ fun PlayerClipScreen(
 
                 Spacer(Modifier.height(12.dp))
 
+                val maxSliderRange = totalDurationSec.toFloat().coerceAtLeast(2f)
+
                 Text(
                     text = "Start Time: ${formatDurationClock(clipStartSec.toInt())}",
                     color = SRColors.TextSecondary,
                     fontSize = 12.sp
                 )
                 Slider(
-                    value = clipStartSec.toFloat(),
+                    value = clipStartSec.toFloat().coerceIn(0f, maxSliderRange),
                     onValueChange = { v ->
                         clipStartSec = v.toDouble().coerceAtMost(max(0.0, clipEndSec - 1.0))
                         seekRequestSec = clipStartSec
                     },
-                    valueRange = 0f..totalDurationSec.toFloat().coerceAtLeast(2f),
+                    valueRange = 0f..maxSliderRange,
                     colors = SliderDefaults.colors(
                         thumbColor = SRColors.ElectricBlue,
                         activeTrackColor = SRColors.ElectricBlue
@@ -346,11 +347,11 @@ fun PlayerClipScreen(
                     fontSize = 12.sp
                 )
                 Slider(
-                    value = clipEndSec.toFloat(),
+                    value = clipEndSec.toFloat().coerceIn(0f, maxSliderRange),
                     onValueChange = { v ->
                         clipEndSec = v.toDouble().coerceAtLeast(min(totalDurationSec, clipStartSec + 1.0))
                     },
-                    valueRange = 0f..totalDurationSec.toFloat().coerceAtLeast(2f),
+                    valueRange = 0f..maxSliderRange,
                     colors = SliderDefaults.colors(
                         thumbColor = SRColors.HotPink,
                         activeTrackColor = SRColors.HotPink

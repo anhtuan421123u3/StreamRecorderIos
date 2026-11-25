@@ -37,6 +37,10 @@ build_streamrecorder_ipa:
         CODE_SIGNING_ALLOWED=NO \
         CODE_SIGN_ENTITLEMENTS="" \
         AD_HOC_CODE_SIGNING_ALLOWED=YES
+    - |
+      APP="build/StreamRecorder.xcarchive/Products/Applications/StreamRecorder.app"
+      plutil -p "$APP/Info.plist"
+      plutil -extract CADisableMinimumFrameDurationOnPhone raw "$APP/Info.plist" | grep -q true
     - mkdir -p build/Payload
     - cp -R build/StreamRecorder.xcarchive/Products/Applications/StreamRecorder.app build/Payload/
     - codesign --force --deep --sign - build/Payload/StreamRecorder.app
