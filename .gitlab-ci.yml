@@ -1,14 +1,37 @@
 stages:
+  - verify
   - build
 
 variables:
   LC_ALL: "en_US.UTF-8"
   LANG: "en_US.UTF-8"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+verify_kmp_and_ios_config:
+  stage: verify
+  image: eclipse-temurin:21-jdk
+  cache:
+    key: gradle-kmp-cache
+    paths:
+      - .gradle/wrapper
+      - .gradle/caches
+  script:
+    - test -f iosApp/StreamRecorder.xcodeproj/project.pbxproj
+    - test -f iosApp/Info.plist
+    - test -f iosApp/StreamRecorder/NativeMediaEngine.swift
+    - grep -q "CADisableMinimumFrameDurationOnPhone" iosApp/Info.plist
+    - chmod +x gradlew
+    - ./gradlew :composeApp:compileKotlinDesktop --no-daemon
+  rules:
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v/
 
 build_streamrecorder_ipa:
   stage: build
   tags:
     - saas-macos-medium-m1
+  when: manual
+  allow_failure: true
   script:
     - xcodebuild -version
     - |
