@@ -32,10 +32,10 @@ public final class LibraryViewModel {
     @MainActor
     public init(
         apiClient: APIClientProtocol = APIClient.shared,
-        databaseService: DatabaseService = DatabaseService.shared
+        databaseService: DatabaseService? = nil
     ) {
         self.apiClient = apiClient
-        self.databaseService = databaseService
+        self.databaseService = databaseService ?? DatabaseService.shared
         loadOfflineCache()
     }
     

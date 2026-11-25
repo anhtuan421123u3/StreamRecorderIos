@@ -1,5 +1,6 @@
-﻿import Foundation
+import Foundation
 import AVFoundation
+import CoreMedia
 
 public protocol HLSDownloadDelegate: AnyObject {
     func hlsDownloadDidProgress(recordingId: String, progress: Double, bytesReceived: Int64)
@@ -66,7 +67,7 @@ public final class HLSDownloadSessionManager: NSObject, AVAssetDownloadDelegate 
         
         var totalLoaded: Double = 0
         for val in loadedTimeRanges {
-            totalLoaded += CMTimeGetSeconds(val.cmTimeRangeValue.duration)
+            totalLoaded += CMTimeGetSeconds(val.timeRangeValue.duration)
         }
         let expected = CMTimeGetSeconds(timeRangeExpectedToLoad.duration)
         let progress = expected > 0 ? min(1.0, max(0.0, totalLoaded / expected)) : 0.0
