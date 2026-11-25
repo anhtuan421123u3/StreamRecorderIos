@@ -51,6 +51,5 @@ build_streamrecorder_ipa:
       - iosApp/build/StreamRecorder-iOS.ipa
     expire_in: 30 days
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_BRANCH
     - if: $CI_COMMIT_TAG =~ /^v/
-    - when: manual
