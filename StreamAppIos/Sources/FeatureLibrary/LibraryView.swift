@@ -3,6 +3,7 @@ import LiveVaultCommon
 import LiveVaultNetwork
 import LiveVaultDesignSystem
 
+@MainActor
 public struct LibraryView: View {
     @State private var viewModel = LibraryViewModel()
     public let onSelectRecording: (String) -> Void

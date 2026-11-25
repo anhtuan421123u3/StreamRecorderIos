@@ -1,5 +1,6 @@
 import SwiftUI
 import LiveVaultCommon
+import LiveVaultNetwork
 import LiveVaultDesignSystem
 
 public struct NotificationsView: View {

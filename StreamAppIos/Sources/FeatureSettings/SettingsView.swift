@@ -1,9 +1,9 @@
-﻿import SwiftUI
+import SwiftUI
 import LiveVaultCommon
 import LiveVaultDesignSystem
 
 public struct SettingsView: View {
-    @StateObject private var viewModel = SettingsViewModel()
+    @State private var viewModel = SettingsViewModel()
     @State private var isWebDAVRunning: Bool = false
     @State private var webDAVIP: String? = nil
     @State private var showLogoutAlert = false

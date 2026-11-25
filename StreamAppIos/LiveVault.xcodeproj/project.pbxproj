@@ -1,4 +1,4 @@
-﻿// !$*UTF8*$!
+// !$*UTF8*$!
 {
 	archiveVersion = 1;
 	classes = {
@@ -8,14 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		AA000001 /* LiveVaultApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001 /* LiveVaultApp.swift */; };
-		AA000002 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB000002 /* Info.plist */; };
-		AA000003 /* LiveVault.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = BB000003 /* LiveVault.entitlements */; };
 		AA000004 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BB000004 /* PrivacyInfo.xcprivacy */; };
 		AA000005 /* LiveVaultAppCore in Frameworks */ = {isa = PBXBuildFile; productRef = DD000001 /* LiveVaultAppCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		BB000001 /* LiveVaultApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/LiveVaultAppCore/LiveVaultApp.swift; sourceTree = "<group>"; };
+		BB000001 /* LiveVaultApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/LiveVaultApp.swift; sourceTree = "<group>"; };
 		BB000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB000003 /* LiveVault.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiveVault.entitlements; sourceTree = "<group>"; };
 		BB000004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -110,7 +108,7 @@
 			);
 			mainGroup = EE000001;
 			packageReferences = (
-				KK000001 /* XCLocalSwiftPackageReference "" */,
+				KK000001 /* XCLocalSwiftPackageReference "." */,
 			);
 			productRefGroup = EE000003 /* Products */;
 			projectDirPath = "";
@@ -126,8 +124,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA000002 /* Info.plist in Resources */,
-				AA000003 /* LiveVault.entitlements in Resources */,
 				AA000004 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -199,20 +195,13 @@
 		MM000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LiveVault.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 101;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_KEY_CFBundleDisplayName = LiveVault;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = LiveVault;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -230,20 +219,13 @@
 		MM000002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = LiveVault.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 101;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_KEY_CFBundleDisplayName = LiveVault;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = LiveVault;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -282,16 +264,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		KK000001 /* XCLocalSwiftPackageReference "" */ = {
+		KK000001 /* XCLocalSwiftPackageReference "." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "";
+			relativePath = ".";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		DD000001 /* LiveVaultAppCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = KK000001 /* XCLocalSwiftPackageReference "" */;
+			package = KK000001 /* XCLocalSwiftPackageReference "." */;
 			productName = LiveVaultAppCore;
 		};
 /* End XCSwiftPackageProductDependency section */

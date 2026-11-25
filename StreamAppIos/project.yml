@@ -1,0 +1,224 @@
+name: LiveVault
+options:
+  bundleIdPrefix: app.livevault
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.4"
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    DEFINES_MODULE: YES
+    SKIP_INSTALL: YES
+
+targets:
+  LiveVaultCommon:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/LiveVaultCommon
+
+  LiveVaultNetwork:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/LiveVaultNetwork
+    dependencies:
+      - target: LiveVaultCommon
+
+  LiveVaultDatabase:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/LiveVaultDatabase
+    dependencies:
+      - target: LiveVaultCommon
+
+  LiveVaultDesignSystem:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/LiveVaultDesignSystem
+    dependencies:
+      - target: LiveVaultCommon
+
+  FeatureAuth:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureAuth
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDesignSystem
+
+  FeatureBrowser:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: Sources/FeatureBrowser
+        excludes:
+          - "*.js"
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultDesignSystem
+
+  FeatureHome:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureHome
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+
+  FeatureChannel:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureChannel
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+
+  FeatureLibrary:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureLibrary
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+
+  FeaturePlayer:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeaturePlayer
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDesignSystem
+
+  FeatureRecordingDetail:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureRecordingDetail
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+
+  FeatureNotifications:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureNotifications
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+
+  FeatureSettings:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeatureSettings
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+
+  FeaturePaywall:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/FeaturePaywall
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDesignSystem
+
+  LiveVaultAppCore:
+    type: library.static
+    platform: iOS
+    sources:
+      - Sources/LiveVaultAppCore
+    dependencies:
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+      - target: FeatureAuth
+      - target: FeatureBrowser
+      - target: FeatureHome
+      - target: FeatureChannel
+      - target: FeatureLibrary
+      - target: FeaturePlayer
+      - target: FeatureRecordingDetail
+      - target: FeatureNotifications
+      - target: FeatureSettings
+      - target: FeaturePaywall
+
+  LiveVault:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App
+      - path: PrivacyInfo.xcprivacy
+        buildPhase: resources
+      - path: Sources/FeatureBrowser/StreamSnifferScript.js
+        buildPhase: resources
+    info:
+      path: Info.plist
+    entitlements:
+      path: LiveVault.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.livevault.ios
+        PRODUCT_NAME: LiveVault
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "101"
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: LiveVault.entitlements
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: NO
+    dependencies:
+      - target: LiveVaultAppCore
+      - target: LiveVaultCommon
+      - target: LiveVaultNetwork
+      - target: LiveVaultDatabase
+      - target: LiveVaultDesignSystem
+      - target: FeatureAuth
+      - target: FeatureBrowser
+      - target: FeatureHome
+      - target: FeatureChannel
+      - target: FeatureLibrary
+      - target: FeaturePlayer
+      - target: FeatureRecordingDetail
+      - target: FeatureNotifications
+      - target: FeatureSettings
+      - target: FeaturePaywall
+
+schemes:
+  LiveVault:
+    build:
+      targets:
+        LiveVault: all
+    archive:
+      config: Release

@@ -1,0 +1,45 @@
+stages:
+  - build
+
+variables:
+  LC_ALL: "en_US.UTF-8"
+  LANG: "en_US.UTF-8"
+
+build_ios_ipa:
+  stage: build
+  tags:
+    - saas-macos-medium-m1
+  script:
+    - xcodebuild -version
+    - |
+      if ! command -v xcodegen >/dev/null 2>&1; then
+        brew install xcodegen
+      fi
+    - cd StreamAppIos
+    - mv Package.swift Package.swift.spm
+    - xcodegen generate
+    - |
+      xcodebuild clean archive \
+        -project LiveVault.xcodeproj \
+        -scheme LiveVault \
+        -configuration Release \
+        -destination "generic/platform=iOS" \
+        -archivePath build/LiveVault.xcarchive \
+        CODE_SIGN_IDENTITY="" \
+        CODE_SIGNING_REQUIRED=NO \
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGN_ENTITLEMENTS="" \
+        AD_HOC_CODE_SIGNING_ALLOWED=YES
+    - mkdir -p build/Payload
+    - cp -R build/LiveVault.xcarchive/Products/Applications/LiveVault.app build/Payload/
+    - codesign --force --deep --sign - build/Payload/LiveVault.app
+    - cd build && zip -r9 LiveVault-iOS.ipa Payload
+  artifacts:
+    name: "LiveVault-iOS-IPA-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - StreamAppIos/build/LiveVault-iOS.ipa
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_TAG =~ /^v/
+    - when: manual

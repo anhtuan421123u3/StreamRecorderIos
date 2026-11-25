@@ -114,24 +114,3 @@ final class NetworkTests: XCTestCase {
         XCTAssertEqual(mockTokenStorage.getAccessToken(), "new_refreshed_access_token")
     }
 }
-
-final class MockTokenStorage: TokenStorageProtocol, @unchecked Sendable {
-    var mockAccessToken: String? = "mock_access_token"
-    var mockRefreshToken: String? = "mock_refresh_token"
-    var mockUser: UserProfile? = nil
-    
-    func saveTokens(accessToken: String, refreshToken: String) throws {
-        self.mockAccessToken = accessToken
-        self.mockRefreshToken = refreshToken
-    }
-    
-    func getAccessToken() -> String? { mockAccessToken }
-    func getRefreshToken() -> String? { mockRefreshToken }
-    func saveUserProfile(_ user: UserProfile) throws { self.mockUser = user }
-    func getUserProfile() -> UserProfile? { mockUser }
-    func clearAll() {
-        mockAccessToken = nil
-        mockRefreshToken = nil
-        mockUser = nil
-    }
-}

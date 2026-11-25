@@ -1,0 +1,48 @@
+name: Sync Code to GitLab
+
+on:
+  workflow_dispatch:
+    inputs:
+      gitlab_repo_url:
+        description: "GitLab HTTPS Repo URL (e.g. https://gitlab.com/username/StreamRecorderIos.git)"
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*"
+
+jobs:
+  mirror-to-gitlab:
+    name: Push / Mirror to GitLab
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab repository
+        env:
+          GITLAB_REPO_URL: ${{ inputs.gitlab_repo_url || secrets.GITLAB_REPO_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME || 'oauth2' }}
+        run: |
+          if [ -z "$GITLAB_REPO_URL" ] || [ -z "$GITLAB_TOKEN" ]; then
+            echo "GITLAB_REPO_URL or GITLAB_TOKEN is not configured in Repository Secrets yet. Skipping automatic GitLab push."
+            exit 0
+          fi
+
+          CLEAN_URL="${GITLAB_REPO_URL#https://}"
+          CLEAN_URL="${CLEAN_URL#http://}"
+          if [[ "${CLEAN_URL%%/*}" == *"@"* ]]; then
+            CLEAN_URL="${CLEAN_URL#*@}"
+          fi
+          AUTH_URL="https://${GITLAB_USERNAME}:${GITLAB_TOKEN}@${CLEAN_URL}"
+
+          git remote remove gitlab 2>/dev/null || true
+          git remote add gitlab "$AUTH_URL"
+          git push gitlab --all --force
+          git push gitlab --tags --force

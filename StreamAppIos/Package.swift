@@ -1,12 +1,11 @@
-﻿// swift-tools-version: 5.10
+// swift-tools-version: 5.10
 import PackageDescription
 
 let package = Package(
     name: "LiveVault",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v17),
-        .macOS(.v14)
+        .iOS(.v17)
     ],
     products: [
         // Core Products
@@ -78,7 +77,10 @@ let package = Package(
                 "LiveVaultCommon",
                 "LiveVaultDesignSystem"
             ],
-            path: "Sources/FeatureBrowser"
+            path: "Sources/FeatureBrowser",
+            resources: [
+                .process("StreamSnifferScript.js")
+            ]
         ),
         .target(
             name: "FeatureHome",

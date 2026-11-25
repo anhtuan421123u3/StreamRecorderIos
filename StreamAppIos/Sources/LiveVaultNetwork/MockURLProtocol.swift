@@ -37,3 +37,26 @@ public final class MockURLProtocol: URLProtocol, @unchecked Sendable {
         return URLSession(configuration: configuration)
     }
 }
+
+public final class MockTokenStorage: TokenStorageProtocol, @unchecked Sendable {
+    public var mockAccessToken: String? = "mock_access_token"
+    public var mockRefreshToken: String? = "mock_refresh_token"
+    public var mockUser: UserProfile? = nil
+
+    public init() {}
+
+    public func saveTokens(accessToken: String, refreshToken: String) throws {
+        self.mockAccessToken = accessToken
+        self.mockRefreshToken = refreshToken
+    }
+
+    public func getAccessToken() -> String? { mockAccessToken }
+    public func getRefreshToken() -> String? { mockRefreshToken }
+    public func saveUserProfile(_ user: UserProfile) throws { self.mockUser = user }
+    public func getUserProfile() -> UserProfile? { mockUser }
+    public func clearAll() {
+        mockAccessToken = nil
+        mockRefreshToken = nil
+        mockUser = nil
+    }
+}
