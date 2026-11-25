@@ -34,6 +34,7 @@ targets:
         SKIP_INSTALL: NO
         FRAMEWORK_SEARCH_PATHS:
           - "$(inherited)"
+          - "$(PROJECT_DIR)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
           - "$(PROJECT_DIR)/../composeApp/build/bin/iosArm64/releaseFramework"
         OTHER_LDFLAGS:
           - "$(inherited)"
@@ -51,6 +52,19 @@ targets:
           - "IOSurface"
           - "-lc++"
           - "-lsqlite3"
+    preBuildScripts:
+      - name: Compile Kotlin Multiplatform Framework
+        script: |
+          if [ "YES" = "$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED" ]; then
+            echo "Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED=YES"
+            exit 0
+          fi
+          if [ -n "$CI" ] && [ -d "$SRCROOT/../composeApp/build/bin/iosArm64/releaseFramework/ComposeApp.framework" ]; then
+            echo "Using prebuilt CI ComposeApp.framework"
+            exit 0
+          fi
+          cd "$SRCROOT/.."
+          ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
 
 schemes:
   StreamRecorder:
